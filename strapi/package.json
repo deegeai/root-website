@@ -13,10 +13,11 @@
     "postinstall": "node ./scripts/updateUuid.js"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^24.2.1",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@strapi/plugin-cloud": "5.19.0",
@@ -25,6 +26,7 @@
     "@strapi/strapi": "5.19.0",
     "better-sqlite3": "11.7.0",
     "patch-package": "^8.0.0",
+    "pg": "^8.16.3",
     "pluralize": "^8.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -36,7 +38,7 @@
     "name": "A Strapi developer"
   },
   "strapi": {
-    "uuid": "LAUNCHPAD"
+    "uuid": "LAUNCHPAD-LOCAL-995a15e8-efd8-4a08-9ba0-c13f05688d5b"
   },
   "engines": {
     "node": ">=18.0.0 <=22.x.x",

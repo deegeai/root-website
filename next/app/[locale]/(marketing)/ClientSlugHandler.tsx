@@ -4,39 +4,48 @@ import { useEffect } from "react";
 import { useSlugContext } from "@/app/context/SlugContext";
 import { useRouter } from "next/navigation";
 
+// Base Strapi URL (prod from Vercel env, fallback to local dev)
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+
+// Origin string like "https://deege-backend-lfra.onrender.com"
+let STRAPI_ORIGIN = "http://localhost:1337";
+try {
+  STRAPI_ORIGIN = new URL(STRAPI_URL).origin;
+} catch {
+  // keep fallback
+}
+
 export default function ClientSlugHandler({
   localizedSlugs,
 }: {
   localizedSlugs: Record<string, string>;
 }) {
   const { dispatch } = useSlugContext();
+  const router = useRouter();
 
+  // keep slug state in context
   useEffect(() => {
     if (localizedSlugs) {
       dispatch({ type: "SET_SLUGS", payload: localizedSlugs });
     }
   }, [localizedSlugs, dispatch]);
 
-  const router = useRouter();
-
+  // listen for Strapi preview "strapiUpdate" messages from the Strapi origin
   useEffect(() => {
-    const handleMessage = async (message: MessageEvent<any>) => {
+    const handleMessage = (message: MessageEvent) => {
       if (
-        message.origin === process.env.NEXT_PUBLIC_API_URL &&
-        message.data.type === "strapiUpdate"
+        message.origin === STRAPI_ORIGIN &&
+        typeof message.data === "object" &&
+        message.data !== null &&
+        (message.data as any).type === "strapiUpdate"
       ) {
         router.refresh();
       }
     };
 
-    // Add the event listener
     window.addEventListener("message", handleMessage);
-
-    // Cleanup the event listener on unmount
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
+    return () => window.removeEventListener("message", handleMessage);
   }, [router]);
 
-  return null; // This component only handles the state and doesn't render anything.
+  return null; // no UI
 }

@@ -1,20 +1,22 @@
 "use client";
-import { motion, useMotionValueEvent } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 import React, { useRef, useState } from "react";
-import { FeatureIconContainer } from "./features/feature-icon-container";
-import { Heading } from "../elements/heading";
 import { Subheading } from "../elements/subheading";
 import { StickyScroll } from "@/components/ui/sticky-scroll";
-import {
-  IconRocket,
-} from "@tabler/icons-react";
-import { useScroll } from "framer-motion";
 
-
-export const Launches = ({ heading, sub_heading, launches }: { heading: string; sub_heading: string; launches: any[] }) => {
-  const launchesWithDecoration = launches.map(entry => ({
+export const Launches = ({
+  sub_heading,
+  launches,
+  logoUrl,
+}: {
+  sub_heading: string;
+  launches: any[];
+  logoUrl: string;  // pass the logo URL as a prop
+}) => {
+  // Remove icon from launches
+  const launchesWithDecoration = launches.map((entry) => ({
     ...entry,
-    icon: <IconRocket className="h-8 w-8 text-secondary" />,
+    // No icon at all
     content: (
       <p className="text-4xl md:text-7xl font-bold text-neutral-800">
         {entry.mission_number}
@@ -45,6 +47,7 @@ export const Launches = ({ heading, sub_heading, launches }: { heading: string; 
     );
     setGradient(backgrounds[closestBreakpointIndex % backgrounds.length]);
   });
+
   return (
     <motion.div
       animate={{
@@ -56,15 +59,26 @@ export const Launches = ({ heading, sub_heading, launches }: { heading: string; 
       ref={ref}
       className="w-full relative h-full pt-20 md:pt-40"
     >
-      <div className="px-6">
-        <FeatureIconContainer className="flex justify-center items-center overflow-hidden">
-          <IconRocket className="h-6 w-6 text-white" />
-        </FeatureIconContainer>
-        <Heading className="mt-4">{heading}</Heading>
-        <Subheading>
-          {sub_heading}
-        </Subheading>
+      <div className="px-6 pb-12">
+        {/* Label with letter spacing */}
+        <p className="text-sm text-[#76777D] text-center uppercase tracking-[0.2em] mb-8">
+          [ UPDATES ]
+        </p>
+
+        {/* Logo centered */}
+        <div className="flex justify-center pt-4">
+          <img
+            src={`${process.env.NEXT_PUBLIC_STRAPI_URL}/uploads/NEWS_1e5fe4612c.svg`}
+            alt="Launches Logo"
+            className="mx-auto h-7 w-auto mb-7"
+          />
+        </div>
+
+        {/* Subheading */}
+        <Subheading className="text-center">{sub_heading}</Subheading>
       </div>
+      
+      {/* Launch cards */}
       <StickyScroll content={launchesWithDecoration} />
     </motion.div>
   );

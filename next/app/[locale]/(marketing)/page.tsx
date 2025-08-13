@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import React from 'react';
 
 import PageContent from '@/lib/shared/PageContent';
 import fetchContentType from '@/lib/strapi/fetchContentType';

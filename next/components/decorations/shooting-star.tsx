@@ -114,10 +114,10 @@ const ShootingStars: React.FC = () => {
       )}
       <defs>
         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "#2EB9DF", stopOpacity: 0 }} />
+          <stop offset="0%" style={{ stopColor: "#9FFFFA", stopOpacity: 0 }} />
           <stop
             offset="100%"
-            style={{ stopColor: "#9E00FF", stopOpacity: 1 }}
+            style={{ stopColor: "#EDFFFE", stopOpacity: 1 }}
           />
         </linearGradient>
       </defs>

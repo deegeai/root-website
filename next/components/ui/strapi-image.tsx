@@ -1,24 +1,28 @@
-import Image from "next/image";
+import Image from 'next/image';
 import { unstable_noStore as noStore } from 'next/cache';
-import { ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 
 interface StrapiImageProps extends Omit<ComponentProps<typeof Image>, 'src' | 'alt'> {
-  src: string;
+  src: string | null;
   alt: string | null;
 }
 
-export function getStrapiMedia(url: string | null) {
-  const strapiURL = process.env.NEXT_PUBLIC_API_URL;
-  if (url == null) return null;
-  if (url.startsWith("data:")) return url;
-  if (url.startsWith("http") || url.startsWith("//")) return url;
-  if (url.startsWith("/")) {
-    if (!strapiURL && document?.location.host.endsWith(".strapidemo.com")) {
-      return `https://${document.location.host.replace("client-", "api-")}${url}`
-    }
-    return strapiURL + url
-  }
-  return `${strapiURL}${url}`;
+export function getStrapiMedia(url: string | null): string | null {
+  const base = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+  if (!url) return null;
+
+  // data URLs pass through
+  if (url.startsWith('data:')) return url;
+
+  // protocol-relative -> normalize to https
+  if (url.startsWith('//')) return `https:${url}`;
+
+  // absolute http(s)
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+
+  // relative path -> prefix with base
+  const needsSlash = url.startsWith('/') ? '' : '/';
+  return `${base}${needsSlash}${url}`;
 }
 
 export function StrapiImage({
@@ -30,16 +34,13 @@ export function StrapiImage({
   noStore();
   const imageUrl = getStrapiMedia(src);
   if (!imageUrl) return null;
+
   return (
-    <Image 
+    <Image
       src={imageUrl}
-      alt={alt ?? "No alternative text provided"}
+      alt={alt ?? 'Decorative image'}
       className={className}
       {...rest}
     />
   );
 }
-
-
-
-

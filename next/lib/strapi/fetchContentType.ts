@@ -1,63 +1,54 @@
+// lib/strapi/fetchContentType.ts
 import { draftMode } from "next/headers";
 import qs from "qs";
-/**
- * Fetches data for a specified Strapi content type.
- *
- * @param {string} contentType - The type of content to fetch from Strapi.
- * @param {string} params - Query parameters to append to the API request.
- * @return {Promise<object>} The fetched data.
- */
 
-interface StrapiData {
-  id: number;
-  [key: string]: any; // Allow for any additional fields
+/** A Strapi response can be single or array */
+export type StrapiResponse<T = unknown> =
+  | { data: T }
+  | { data: T[] };
+
+export function spreadStrapiData<T>(payload: StrapiResponse<T>): T | null {
+  const d = (payload as any).data as T | T[] | undefined;
+  if (Array.isArray(d)) return d[0] ?? null;
+  return (d as T) ?? null;
 }
 
-interface StrapiResponse {
-  data: StrapiData | StrapiData[];
-}
-
-export function spreadStrapiData(data: StrapiResponse): StrapiData | null {
-  if (Array.isArray(data.data) && data.data.length > 0) {
-    return data.data[0];
-  }
-  if (!Array.isArray(data.data)) {
-    return data.data;
-  }
-  return null
-}
-
-export default async function fetchContentType(
+export default async function fetchContentType<T = any>(
   contentType: string,
   params: Record<string, unknown> = {},
-  spreadData?: boolean,
-): Promise<any> {
-  const { isEnabled } = await draftMode()
+  spreadData = false
+): Promise<T | StrapiResponse<T> | null> {
+  const { isEnabled } = await draftMode();
 
   try {
+    const BASE = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 
-    const queryParams = { ...params };
-
+    // Build query params
+    const queryParams: Record<string, unknown> = { ...params };
     if (isEnabled) {
-      queryParams.status = "draft";
+      // Preview draft content in Strapi
+      queryParams.publicationState = "preview";
     }
 
-    // Construct the full URL for the API request
-    const url = new URL(`api/${contentType}`, process.env.NEXT_PUBLIC_API_URL);
+    // Safe URL build
+    const url = new URL(`/api/${contentType}`, BASE);
+    const query = qs.stringify(queryParams, { encodeValuesOnly: true });
 
-    // Perform the fetch request with the provided query parameters
-    const response = await fetch(`${url.href}?${qs.stringify(queryParams)}`, {
-      method: 'GET',
-      cache: 'no-store',
+    const res = await fetch(query ? `${url.href}?${query}` : url.href, {
+      method: "GET",
+      cache: "no-store",
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data from Strapi (url=${url.toString()}, status=${response.status})`);
+    if (!res.ok) {
+      throw new Error(
+        `Failed to fetch ${contentType} from Strapi (status=${res.status})`
+      );
     }
-    const jsonData: StrapiResponse = await response.json();
-    return spreadData ? spreadStrapiData(jsonData) : jsonData;
-  } catch (error) {
-    // Log any errors that occur during the fetch process
-    console.error('FetchContentTypeError', error);
+
+    const json = (await res.json()) as StrapiResponse<T>;
+    return spreadData ? (spreadStrapiData(json) as T | null) : json;
+  } catch (err) {
+    console.error("FetchContentTypeError", err);
+    return null;
   }
 }

@@ -18,10 +18,10 @@ export const Logo = ({ image, locale }: { image?: Image, locale?: string }) => {
           alt={image.alternativeText}
           width={200}
           height={200}
-          className="h-10 w-10 rounded-xl mr-2"
+          className="h-10 w-10 rounded-md mr-2"
         />
 
-        <span className="text-white font-bold">LaunchPad</span>
+        <span className="text-white font-bold">DEEGE AI</span>
       </Link>
     );
   }

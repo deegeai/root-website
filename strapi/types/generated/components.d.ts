@@ -445,9 +445,9 @@ export interface SharedSeo extends Struct.ComponentSchema {
     icon: 'search';
   };
   attributes: {
-    canonicalURL: Schema.Attribute.String;
+    canonicalURL: Schema.Attribute.Text;
     keywords: Schema.Attribute.Text;
-    metaDescription: Schema.Attribute.String &
+    metaDescription: Schema.Attribute.Text &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
         minLength: 50;
@@ -485,8 +485,8 @@ export interface SharedSteps extends Struct.ComponentSchema {
     icon: 'bulletList';
   };
   attributes: {
-    description: Schema.Attribute.String;
-    title: Schema.Attribute.String;
+    description: Schema.Attribute.Text;
+    title: Schema.Attribute.Text;
   };
 }
 

@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect, memo } from "react";import { Transition } from "@headlessui/react";
+import { useState, useRef, useEffect, memo } from "react";
+import { Transition } from "@headlessui/react";
 import { SparklesCore } from "../../ui/sparkles";
 import { cn } from "@/lib/utils";
-import { StrapiImage } from "@/components/ui/strapi-image"
+import { StrapiImage } from "@/components/ui/strapi-image";
 
 export const TestimonialsSlider = ({ testimonials }: { testimonials: any }) => {
   const [active, setActive] = useState<number>(0);
   const [autorotate, setAutorotate] = useState<boolean>(true);
   const testimonialsRef = useRef<HTMLDivElement>(null);
 
-  const slicedTestimonials = testimonials.slice(0, 3);
+  const slicedTestimonials = testimonials.slice(0, 7);
 
   useEffect(() => {
     if (!autorotate) return;
@@ -45,7 +46,7 @@ export const TestimonialsSlider = ({ testimonials }: { testimonials: any }) => {
 
   return (
     <section>
-      <div className="max-w-3xl mx-auto  relative z-30 h-80">
+      <div className="max-w-3xl mx-auto relative z-30 h-80">
         <div className="relative pb-12 md:pb-20">
           {/* Particles animation */}
           <div className="absolute left-1/2 -translate-x-1/2 -top-2 -z-10 w-80 h-20 -mt-6">
@@ -69,10 +70,10 @@ export const TestimonialsSlider = ({ testimonials }: { testimonials: any }) => {
                   <Transition
                     key={index}
                     show={active === index}
-                    enter="transition ease-&lsqb;cubic-bezier(0.68,-0.3,0.32,1)&rsqb; duration-700 order-first"
+                    enter="transition ease-[cubic-bezier(0.68,-0.3,0.32,1)] duration-700 order-first"
                     enterFrom="opacity-0 -translate-x-20"
                     enterTo="opacity-100 translate-x-0"
-                    leave="transition ease-&lsqb;cubic-bezier(0.68,-0.3,0.32,1)&rsqb; duration-700"
+                    leave="transition ease-[cubic-bezier(0.68,-0.3,0.32,1)] duration-700"
                     leaveFrom="opacity-100 translate-x-0"
                     leaveTo="opacity-0 translate-x-20"
                     beforeEnter={() => heightFix()}
@@ -80,10 +81,10 @@ export const TestimonialsSlider = ({ testimonials }: { testimonials: any }) => {
                     <div className="absolute inset-0 h-full -z-10">
                       <StrapiImage 
                         className="relative top-11 left-1/2 -translate-x-1/2 rounded-full"
-                        src={item.user.image.url}
+                        src={item.user.image?.url ?? ""}
                         width={56}
                         height={56}
-                        alt={`${item.user.firstname} ${item.user.lastname}`}
+                        alt={`${item.user.firstname ?? ""} ${item.user.lastname ?? ""}`}
                       />
                     </div>
                   </Transition>
@@ -113,14 +114,13 @@ export const TestimonialsSlider = ({ testimonials }: { testimonials: any }) => {
               </div>
             </div>
             {/* Buttons */}
-            <div className="flex flex-wrap justify-center -m-1.5 px-8 sm:px-6">
+            <div className="flex flex-wrap justify-center gap-y-1 -m-1.5 px-8 sm:px-6">
               {slicedTestimonials.map((item: any, index: number) => (
                 <button
                   className={cn(
-                    `px-2 py-1 rounded-full m-1.5 text-xs border border-transparent text-neutral-300 transition duration-150 ease-in-out [background:linear-gradient(theme(colors.neutral.900),_theme(colors.neutral.900))_padding-box,_conic-gradient(theme(colors.neutral.400),_theme(colors.neutral.700)_25%,_theme(colors.neutral.700)_75%,_theme(colors.neutral.400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-neutral-800/30 before:rounded-full before:pointer-events-none ${active === index
-                      ? "border-secondary/50"
-                      : "border-transparent opacity-70"
-                    }`
+                    `px-2 py-1 rounded-full m-1.5 text-xs border border-transparent text-neutral-300 transition duration-150 ease-in-out
+                    [background:linear-gradient(theme(colors.neutral.900),_theme(colors.neutral.900))_padding-box,_conic-gradient(theme(colors.neutral.400),_theme(colors.neutral.700)_25%,_theme(colors.neutral.700)_75%,_theme(colors.neutral.400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-neutral-800/30 before:rounded-full before:pointer-events-none
+                    ${active === index ? "border-secondary/50" : "border-transparent opacity-70"}`
                   )}
                   key={index}
                   onClick={() => {
@@ -130,15 +130,11 @@ export const TestimonialsSlider = ({ testimonials }: { testimonials: any }) => {
                 >
                   <span className="relative">
                     <span className="text-neutral-50 font-bold">
-                      {item.user.firstname + item.user.lastname}
+                      {item.user.firstname + " " + item.user.lastname}
                     </span>{" "}
                     <br className="block sm:hidden" />
-                    <span className="text-neutral-600 hidden sm:inline-block">
-                      -
-                    </span>{" "}
-                    <span className="hidden sm:inline-block">
-                      {item.user.job}
-                    </span>
+                    <span className="text-neutral-600 hidden sm:inline-block">-</span>{" "}
+                    <span className="hidden sm:inline-block">{item.user.job}</span>
                   </span>
                 </button>
               ))}
