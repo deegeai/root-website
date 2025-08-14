@@ -1,26 +1,25 @@
 // config/database.ts
 export default ({ env }) => {
-  const useUrl = !!env('DATABASE_URL');
-  const ssl = env.bool('DATABASE_SSL', false);
+  const url = env('DATABASE_URL');
 
-  if (useUrl) {
+  if (url) {
+    // Production (Render): use Postgres via DATABASE_URL
     return {
       connection: {
         client: 'postgres',
         connection: {
-          connectionString: env('DATABASE_URL'),
-          ssl: ssl ? { rejectUnauthorized: false } : false,
+          connectionString: url,
+          ssl: env.bool('DATABASE_SSL', true) ? { rejectUnauthorized: false } : false,
         },
-        pool: { min: 2, max: 10 },
       },
     };
   }
 
-  // Local fallback: SQLite
+  // Local dev: SQLite
   return {
     connection: {
       client: 'sqlite',
-      connection: { filename: env('SQLITE_FILENAME', '.tmp/data.db') },
+      connection: { filename: env('DATABASE_FILENAME', '.tmp/data.db') },
       useNullAsDefault: true,
     },
   };

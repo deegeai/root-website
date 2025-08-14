@@ -1,101 +1,95 @@
-/**
- * `deepPopulate` middleware
- */
-
+// src/middlewares/deep-populate.ts
 import type { Core } from '@strapi/strapi';
-import { UID } from '@strapi/types';
+import type { UID } from '@strapi/types';
 import { contentTypes } from '@strapi/utils';
 import pluralize from 'pluralize';
 
-
-interface Options {
-  /**
-   * Fields to select when populating relations
-   */
-  relationalFields?: string[];
-}
+interface Options { relationalFields?: string[] }
 
 const { CREATED_BY_ATTRIBUTE, UPDATED_BY_ATTRIBUTE } = contentTypes.constants;
 
-const extractPathSegment = (url: string) => url.match(/\/([^/?]+)(?:\?|$)/)?.[1] || '';
+const getContentTypeFromUrl = (url: string) => {
+  const path = url.split('?')[0];
+  const parts = path.split('/').filter(Boolean); // e.g. ['api','pages']
+  return parts[1] || ''; // 'pages' / 'global' / etc.
+};
 
-const getDeepPopulate = (uid: UID.Schema, opts: Options = {}) => {
+const getDeepPopulate = (
+  strapi: Core.Strapi,
+  uid: UID.ContentType | UID.Component,
+  opts: Options = {}
+) => {
   const model = strapi.getModel(uid);
-  const attributes = Object.entries(model.attributes);
+  if (!model) return {};
 
-  return attributes.reduce((acc: any, [attributeName, attribute]) => {
+  const attributes = Object.entries(model.attributes ?? {});
+  return attributes.reduce((acc: any, [attributeName, attribute]: any) => {
     switch (attribute.type) {
       case 'relation': {
-        const isMorphRelation = attribute.relation.toLowerCase().startsWith('morph');
-        if (isMorphRelation) {
-          break;
-        }
+        const isMorph = String(attribute.relation || '').toLowerCase().startsWith('morph');
+        if (isMorph) break;
 
-        // Ignore not visible fields other than createdBy and updatedBy
         const isVisible = contentTypes.isVisibleAttribute(model, attributeName);
         const isCreatorField = [CREATED_BY_ATTRIBUTE, UPDATED_BY_ATTRIBUTE].includes(attributeName);
-
-        if (isVisible) {
+        if (isVisible || isCreatorField) {
           if (attributeName === 'testimonials') {
-            acc[attributeName] = { populate: "user.image" };
+            // more correct nested populate than 'user.image'
+            acc[attributeName] = { populate: { user: { populate: 'image' } } };
           } else {
-            acc[attributeName] = { populate: "*" };
+            acc[attributeName] = { populate: '*' };
           }
         }
-
         break;
       }
-
       case 'media': {
-        acc[attributeName] = { populate: "*" };
+        acc[attributeName] = { populate: '*' };
         break;
       }
-
       case 'component': {
-        const populate = getDeepPopulate(attribute.component, opts);
-        acc[attributeName] = { populate };
+        const compUID = attribute.component as UID.Component;
+        acc[attributeName] = { populate: getDeepPopulate(strapi, compUID, opts) };
         break;
       }
-
       case 'dynamiczone': {
-        // Use fragments to populate the dynamic zone components
-        const populatedComponents = (attribute.components || []).reduce(
-          (acc: any, componentUID: UID.Component) => {
-            acc[componentUID] = { populate: getDeepPopulate(componentUID, opts) };
-
-            return acc;
-          },
-          {}
-        );
-
-        acc[attributeName] = { on: populatedComponents };
+        const comps = (attribute.components || []).reduce((m: any, compUID: string) => {
+          m[compUID] = { populate: getDeepPopulate(strapi, compUID as UID.Component, opts) };
+          return m;
+        }, {});
+        acc[attributeName] = { on: comps };
         break;
       }
       default:
         break;
     }
-
     return acc;
   }, {});
 };
 
-export default (config, { strapi }: { strapi: Core.Strapi }) => {
+export default (config: unknown, { strapi }: { strapi: Core.Strapi }) => {
   return async (ctx, next) => {
-    if (ctx.request.url.startsWith('/api/') && ctx.request.method === 'GET' && !ctx.query.populate && !ctx.request.url.includes('/api/users') && !ctx.request.url.includes('/api/seo')
+    const url = ctx.request.url;
+
+    if (
+      url.startsWith('/api/') &&
+      ctx.request.method === 'GET' &&
+      !ctx.query.populate &&
+      !url.includes('/api/users') &&
+      !url.includes('/api/seo')
     ) {
-      strapi.log.info('Using custom Dynamic-Zone population Middleware...');
-
-      const contentType = extractPathSegment(ctx.request.url);
-      const singular = pluralize.singular(contentType)
-      const uid = `api::${singular}.${singular}`;
-
-      ctx.query.populate = {
-        // @ts-ignores 
-        ...getDeepPopulate(uid),
-        ...(!ctx.request.url.includes("products") && { localizations: { populate: {} } })
-      };
+      const ct = getContentTypeFromUrl(url);           // 'pages' | 'global' | ...
+      const singular = pluralize.singular(ct);         // 'page'  | 'global'
+      if (singular) {
+        const uid = `api::${singular}.${singular}` as UID.ContentType;
+        const populate = getDeepPopulate(strapi, uid);
+        if (Object.keys(populate).length) {
+          ctx.query.populate = {
+            ...populate,
+            ...(!url.includes('products') && { localizations: { populate: {} } }),
+          };
+        }
+      }
     }
+
     await next();
   };
 };
-
